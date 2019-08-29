@@ -47,7 +47,6 @@ void waterZone::begin(int serialPin, int latchPin, int clockPin,
                       int totalBytes) {
 
     if (! _shiftEnabled) {
-        //Serial.println("[DEBUG] Initialize shift register.");
 
         // Shift mode enabled.
         _shiftEnabled = true;
@@ -117,34 +116,41 @@ void waterZone::adjust(unsigned int startTime, unsigned int endTime,
 
 }
 
-unsigned long waterZone::read(String scheduleElement) {
+unsigned long waterZone::read(int scheduleElement) {
 
     unsigned long scheduleValue;
-    if (scheduleElement == "startTime") {
+    // Start time:
+    if (scheduleElement == 0) {
         scheduleValue = _startHour * 100 + _startMinute;
         return scheduleValue;
     }
-    else if (scheduleElement == "endTime") {
+    // Stop time:
+    else if (scheduleElement == 1) {
         scheduleValue = _endHour * 100 + _endMinute;
         return scheduleValue;
     }
-    else if (scheduleElement == "startHour") {
+    // Start hour:
+    else if (scheduleElement == 2) {
         scheduleValue = _startHour;
         return scheduleValue;
     }
-    else if (scheduleElement == "startMinute") {
+    // Start minute:
+    else if (scheduleElement == 3) {
         scheduleValue = _startMinute;
         return scheduleValue;
     }
-    else if (scheduleElement == "endHour") {
+    // Stop hour:
+    else if (scheduleElement == 4) {
         scheduleValue = _endHour;
         return scheduleValue;
     }
-    else if (scheduleElement == "endMinute") {
+    // Stop minute:
+    else if (scheduleElement == 5) {
         scheduleValue = _endMinute;
         return scheduleValue;
     }
-    else if (scheduleElement == "daysOfWeek") {
+    // Days of the week:
+    else if (scheduleElement == 6) {
         scheduleValue = _daysofWeekLong;
         return scheduleValue;
     }
@@ -154,8 +160,6 @@ unsigned long waterZone::read(String scheduleElement) {
 
 bool waterZone::run(DateTime now) {
 
-    //Serial.println(String(now.hour()) + ":" + String(now.minute()) + " day: "
-    //    + String(now.dayOfTheWeek()) + " " + String(_manualOverride));
     bool returnVal = false;
     // Automatic Event Trigger:
     if (_enabled && _manualOverride == false
@@ -165,7 +169,6 @@ bool waterZone::run(DateTime now) {
             && now.minute() == _startMinute) {
             _on();
             _onVerification = true;
-            Serial.println("[DEBUG] auto on");
             returnVal = true;
         }
         // Auto Off:
@@ -173,7 +176,6 @@ bool waterZone::run(DateTime now) {
             && now.minute() == _endMinute) {
             _off();
             _onVerification = false;
-            Serial.println("[DEBUG] auto off");
             returnVal = true;
         }
     }
@@ -187,13 +189,11 @@ bool waterZone::run(DateTime now) {
         if (_onVerification == false && now.hour() == _startHour
             && now.minute() == _startMinute) {
             _onVerification = true;
-            //Serial.println("[DEBUG] Set onVer TRUE");
         }
         // 
         else if (_onVerification == true && now.hour() == _endHour
             && now.minute() == _endMinute) {
             _onVerification = false;
-            //Serial.println("[DEBUG] Set onVer FALSE");
         }
     }
 
@@ -201,7 +201,6 @@ bool waterZone::run(DateTime now) {
     if (_timedManualOverride == true && now.hour() == _tmoEndHour
         && now.minute() == _tmoEndMinute) {
         off();
-        //Serial.println("[DEBUG] timed manual off");
         returnVal = true;
     }
 
@@ -214,8 +213,6 @@ void waterZone::on() {
 
     _on();
     _manualOverride = true;
-
-    //Serial.println("[DEBUG] manual on");
 
 }
 
@@ -230,8 +227,6 @@ void waterZone::on(DateTime now, unsigned int hoursDuration,
     _tmoEndMinute = future. minute();
     _timedManualOverride = true;
 
-    //Serial.println("[DEBUG] timed manual on");
-
 }
 
 // Manually turn off irrigation zone.
@@ -242,8 +237,6 @@ void waterZone::off() {
     _tmoEndHour = 0;
     _tmoEndMinute = 0;
     _timedManualOverride = false;
-
-    //Serial.println("[DEBUG] manual off");
 
 }
 
@@ -295,4 +288,10 @@ bool waterZone::isDisabled() {
 
     return !_enabled;
     
+}
+
+void waterZone::factor(float flowFactor) {
+
+    _flowFactor = flowFactor;
+
 }

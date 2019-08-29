@@ -11,6 +11,15 @@ TO DO:     . = WIP     ✓ = completed
 #include <Arduino.h>
 #include <RTClib.h>
 
+// Values for waterZone.read() arguments
+#define START_TIME 0
+#define STOP_TIME 1
+#define START_HOUR 2
+#define START_MINUTE 3
+#define STOP_HOUR 4
+#define STOP_MINUTE 5
+#define DAYS_OF_WEEK 6
+
 class waterZone {
 
     private:
@@ -75,6 +84,8 @@ class waterZone {
         bool _daysOfWeek[7];
         bool _enabled;
         bool _onVerification;
+        float _flowFactor;
+
 
         // Manual Method Variables:
         bool _manualOverride;
@@ -99,7 +110,7 @@ class waterZone {
         void adjust(unsigned int startTime, unsigned int endTime,
                     unsigned long daysOfWeek, bool enable = true);
         // Return specificied schedule element.
-        unsigned long read(String scheduleElement);
+        unsigned long read(int scheduleElement);
         // Check schedule to see if time to water.
         bool run(DateTime now);
         // Turn irrigation on.
@@ -123,6 +134,8 @@ class waterZone {
         bool isEnabled();
         // Return TRUE if automatic irrigation is disabled.
         bool isDisabled();
+        // Change irrigation flow factor.
+        void factor(float flowFactor);
 
         //void enableDST();
         //void disableDST();
@@ -130,21 +143,10 @@ class waterZone {
         // void end();      // destructor to remove zones
 
         // NOTE: how to account for DST??? is it even that important?
-            // method enableDST()
         // NOTE: Alternative scheduling patterns: pick a day, then daily, weekly,
         // biweekly, monthly, bimonthly, annually, etc.
-            // (maybe specify custom pattern in constructor??)
+        
 
 };
-
-// TODO: test macro, maybe replace with integer values since using macro
-// aliases.
-#define START_TIME "startTime"
-#define STOP_TIME "endTime"
-#define START_HOUR "startHour"
-#define STOP_HOUR "endHour"
-#define START_MINUTE "startMinute"
-#define STOP_MINUTE "endMinute"
-#define DAYS_OF_WEEK "daysOfWeek"
 
 #endif
