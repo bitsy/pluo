@@ -1,14 +1,17 @@
 *****************************
-*     H2Okit Public API     *
+*       Pluo Keywords       *
 *****************************
 
 waterZone	KEYWORD1
 begin	KEYWORD2
 adjust	KEYWORD2
 read	KEYWORD2
-check	KEYWORD2
+run KEYWORD2
 on	KEYWORD2
 off	KEYWORD2
-state	KEYWORD2
+isOn	KEYWORD2
+isOff   KEYWORD2
 enable	KEYWORD2
 disable	KEYWORD2
+isEnabled   KEYWORD2
+isDisabled  KEYWORD2

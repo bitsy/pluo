@@ -124,9 +124,13 @@ class waterZone {
         // Return TRUE if automatic irrigation is disabled.
         bool isDisabled();
 
+        //void enableDST();
+        //void disableDST();
+
         // void end();      // destructor to remove zones
 
         // NOTE: how to account for DST??? is it even that important?
+            // method enableDST()
         // NOTE: Alternative scheduling patterns: pick a day, then daily, weekly,
         // biweekly, monthly, bimonthly, annually, etc.
             // (maybe specify custom pattern in constructor??)
@@ -136,7 +140,11 @@ class waterZone {
 // TODO: test macro, maybe replace with integer values since using macro
 // aliases.
 #define START_TIME "startTime"
-#define END_TIME "endTime"
-#define START_HOUR "endHour"
+#define STOP_TIME "endTime"
+#define START_HOUR "startHour"
+#define STOP_HOUR "endHour"
+#define START_MINUTE "startMinute"
+#define STOP_MINUTE "endMinute"
+#define DAYS_OF_WEEK "daysOfWeek"
 
 #endif
