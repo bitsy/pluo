@@ -33,7 +33,7 @@ class waterZone {
         static int _totalBytes;     // Number of shift registers.
         static int * _byte;         // Contains byte state of each register.
 
-        // Hardware Methods:
+        // Zone on/off:
         void _on() {
 
             if (_shiftEnabled) {
@@ -75,7 +75,7 @@ class waterZone {
 
         }
 
-        // Auto Method Variables:
+        // Schedule 1 Auto Variables:
         unsigned int _startHour;
         unsigned int _startMinute;
         unsigned int _endHour;
@@ -84,10 +84,12 @@ class waterZone {
         bool _daysOfWeek[7];
         bool _enabled;
         bool _onVerification;
+
+        // Schedule 2 Auto Variables:
         float _flowFactor;
 
 
-        // Manual Method Variables:
+        // Manual Variables:
         bool _manualOverride;
         bool _timedManualOverride;
         unsigned int _tmoHoursDuration;
@@ -107,12 +109,14 @@ class waterZone {
                    int totalBytes = 1);
         // Change watering schedule to new parameters.
         // TODO: Instead of endtime, use duration?
-        void adjust(unsigned int startTime, unsigned int endTime,
+        void schedule(unsigned int startTime, unsigned int endTime,
                     unsigned long daysOfWeek, bool enable = true);
+        // TODO: interval timing!!
+        void schedule(unsigned int superPattern, unsigned int subPattern);
         // Return specificied schedule element.
         unsigned long read(int scheduleElement);
         // Check schedule to see if time to water.
-        bool run(DateTime now);
+        bool run(uint32_t currentUnixTime);
         // Turn irrigation on.
         void on();
         // Turn irrigation on for a duration (in minutes).
@@ -145,7 +149,7 @@ class waterZone {
         // NOTE: how to account for DST??? is it even that important?
         // NOTE: Alternative scheduling patterns: pick a day, then daily, weekly,
         // biweekly, monthly, bimonthly, annually, etc.
-        
+
 
 };
 

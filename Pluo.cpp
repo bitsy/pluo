@@ -23,7 +23,7 @@ waterZone::waterZone(unsigned int zonePin, unsigned int startTime,
 
     // If all schedule parameters are specified, set the schedule.
         // A valid startTime can be 0; a valid endTime cannot be 0.
-    if (endTime && daysOfWeek) adjust(startTime, endTime, daysOfWeek);
+    if (endTime && daysOfWeek) schedule(startTime, endTime, daysOfWeek);
     // Otherwise, do not set the schedule, and disable the zone.
     else _enabled = false;
 
@@ -78,10 +78,10 @@ void waterZone::begin(int serialPin, int latchPin, int clockPin,
 
 }
 
-void waterZone::adjust(unsigned int startTime, unsigned int endTime,
+void waterZone::schedule(unsigned int startTime, unsigned int endTime,
                        unsigned long daysOfWeek, bool enable) {
 
-    // When adjusted, the zone is enabled by default.
+    // When scheduleed, the zone is enabled by default.
     _enabled = enable;
 
     // Parse start and end times into hour and minute values.
@@ -112,8 +112,11 @@ void waterZone::adjust(unsigned int startTime, unsigned int endTime,
         daysOfWeek /= 10;
     }
     for(int i = 0; i < 7; i++) Serial.print(_daysOfWeek[i]);
-    Serial.println("");
 
+}
+
+void waterZone::schedule(unsigned int superPattern, unsigned int subPattern) {
+    
 }
 
 unsigned long waterZone::read(int scheduleElement) {
@@ -158,8 +161,9 @@ unsigned long waterZone::read(int scheduleElement) {
 
 }
 
-bool waterZone::run(DateTime now) {
+bool waterZone::run(uint32_t currentUnixTime) {
 
+    DateTime now(currentUnixTime);
     bool returnVal = false;
     // Automatic Event Trigger:
     if (_enabled && _manualOverride == false
