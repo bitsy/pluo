@@ -13,17 +13,17 @@ int waterZone::_serialPin = 0;
 int waterZone::_latchPin = 0;
 int waterZone::_clockPin = 0;
 int waterZone::_totalBytes = 0;
-int * waterZone::_byte = nullptr;
+int* waterZone::_byte = nullptr;
 
 waterZone::waterZone(unsigned int zonePin, unsigned int startTime,
-                     unsigned int endTime, unsigned long daysOfWeek) {
+                     unsigned int stopTime, unsigned long daysOfWeek) {
 
     // Set pin or shift register pin as generic index.
     _index = zonePin;
 
     // If all schedule parameters are specified, set the schedule.
-        // A valid startTime can be 0; a valid endTime cannot be 0.
-    if (endTime && daysOfWeek) schedule(startTime, endTime, daysOfWeek);
+        // A valid startTime can be 0; a valid stopTime cannot be 0.
+    if (stopTime && daysOfWeek) schedule(startTime, stopTime, daysOfWeek);
     // Otherwise, do not set the schedule, and disable the zone.
     else _enabled = false;
 
@@ -31,8 +31,8 @@ waterZone::waterZone(unsigned int zonePin, unsigned int startTime,
 
     _manualOverride = false;
     _timedManualOverride = false;
-    _tmoEndHour = 0;
-    _tmoEndMinute = 0;
+    _tmoStopHour = 0;
+    _tmoStopMinute = 0;
 
 }
 
@@ -78,7 +78,7 @@ void waterZone::begin(int serialPin, int latchPin, int clockPin,
 
 }
 
-void waterZone::schedule(unsigned int startTime, unsigned int endTime,
+void waterZone::schedule(unsigned int startTime, unsigned int stopTime,
                        unsigned long daysOfWeek, bool enable) {
 
     // When scheduleed, the zone is enabled by default.
@@ -87,8 +87,8 @@ void waterZone::schedule(unsigned int startTime, unsigned int endTime,
     // Parse start and end times into hour and minute values.
     _startHour = startTime / 100;
     _startMinute = startTime % 100;
-    _endHour = endTime / 100;
-    _endMinute = endTime % 100;
+    _stopHour = stopTime / 100;
+    _stopMinute = stopTime % 100;
 
     // Save the scheduled days as an unsigned long.
     _daysofWeekLong = daysOfWeek;
@@ -115,10 +115,6 @@ void waterZone::schedule(unsigned int startTime, unsigned int endTime,
 
 }
 
-void waterZone::schedule(unsigned int superPattern, unsigned int subPattern) {
-    
-}
-
 unsigned long waterZone::read(int scheduleElement) {
 
     unsigned long scheduleValue;
@@ -129,7 +125,7 @@ unsigned long waterZone::read(int scheduleElement) {
     }
     // Stop time:
     else if (scheduleElement == 1) {
-        scheduleValue = _endHour * 100 + _endMinute;
+        scheduleValue = _stopHour * 100 + _stopMinute;
         return scheduleValue;
     }
     // Start hour:
@@ -144,12 +140,12 @@ unsigned long waterZone::read(int scheduleElement) {
     }
     // Stop hour:
     else if (scheduleElement == 4) {
-        scheduleValue = _endHour;
+        scheduleValue = _stopHour;
         return scheduleValue;
     }
     // Stop minute:
     else if (scheduleElement == 5) {
-        scheduleValue = _endMinute;
+        scheduleValue = _stopMinute;
         return scheduleValue;
     }
     // Days of the week:
@@ -176,8 +172,8 @@ bool waterZone::run(uint32_t currentUnixTime) {
             returnVal = true;
         }
         // Auto Off:
-        else if (_onVerification == true && now.hour() == _endHour
-            && now.minute() == _endMinute) {
+        else if (_onVerification == true && now.hour() == _stopHour
+            && now.minute() == _stopMinute) {
             _off();
             _onVerification = false;
             returnVal = true;
@@ -195,15 +191,15 @@ bool waterZone::run(uint32_t currentUnixTime) {
             _onVerification = true;
         }
         // 
-        else if (_onVerification == true && now.hour() == _endHour
-            && now.minute() == _endMinute) {
+        else if (_onVerification == true && now.hour() == _stopHour
+            && now.minute() == _stopMinute) {
             _onVerification = false;
         }
     }
 
     // Automatic Timed Event Trigger:
-    if (_timedManualOverride == true && now.hour() == _tmoEndHour
-        && now.minute() == _tmoEndMinute) {
+    if (_timedManualOverride == true && now.hour() == _tmoStopHour
+        && now.minute() == _tmoStopMinute) {
         off();
         returnVal = true;
     }
@@ -227,8 +223,8 @@ void waterZone::on(DateTime now, unsigned int hoursDuration,
     _on();
     _manualOverride = true;
     DateTime future = (now + TimeSpan(0, hoursDuration, minutesDuration, 0));
-    _tmoEndHour = future.hour();
-    _tmoEndMinute = future. minute();
+    _tmoStopHour = future.hour();
+    _tmoStopMinute = future. minute();
     _timedManualOverride = true;
 
 }
@@ -238,8 +234,8 @@ void waterZone::off() {
 
     _off();
     _manualOverride = false;
-    _tmoEndHour = 0;
-    _tmoEndMinute = 0;
+    _tmoStopHour = 0;
+    _tmoStopMinute = 0;
     _timedManualOverride = false;
 
 }

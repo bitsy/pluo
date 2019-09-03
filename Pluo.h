@@ -78,8 +78,8 @@ class waterZone {
         // Schedule 1 Auto Variables:
         unsigned int _startHour;
         unsigned int _startMinute;
-        unsigned int _endHour;
-        unsigned int _endMinute;
+        unsigned int _stopHour;
+        unsigned int _stopMinute;
         unsigned long _daysofWeekLong;
         bool _daysOfWeek[7];
         bool _enabled;
@@ -94,25 +94,26 @@ class waterZone {
         bool _timedManualOverride;
         unsigned int _tmoHoursDuration;
         unsigned int _tmoMinutesDuration;
-        unsigned int _tmoEndHour;
-        unsigned int _tmoEndMinute;
+        unsigned int _tmoStopHour;
+        unsigned int _tmoStopMinute;
 
     public:
 
         // Construct zone object, set schedule, and enable automatic watering.
         waterZone(unsigned int zonePin, unsigned int startTime = 0,
-                  unsigned int endTime = 0, unsigned long daysOfWeek = 0);
+                  unsigned int stopTime = 0, unsigned long daysOfWeek = 0);
         // Initialize pin for zone.
         void begin();
         // Initialize shift register(s) for all zones
         void begin(int serialPin, int latchPin, int clockPin,
                    int totalBytes = 1);
         // Change watering schedule to new parameters.
-        // TODO: Instead of endtime, use duration?
-        void schedule(unsigned int startTime, unsigned int endTime,
+        // TODO: Instead of stopTime, use duration?
+        void schedule(unsigned int startTime, unsigned int stopTime,
                     unsigned long daysOfWeek, bool enable = true);
         // TODO: interval timing!!
-        void schedule(unsigned int superPattern, unsigned int subPattern);
+        void schedule(uint16_t startTime, uint16_t superDelay, uint8_t superDuration, uint16_t subDelay, uint8_t subDuration);
+        void schedule(uint16_t& patternArray);
         // Return specificied schedule element.
         unsigned long read(int scheduleElement);
         // Check schedule to see if time to water.
