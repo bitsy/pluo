@@ -79,7 +79,7 @@ void waterZone::begin(int serialPin, int latchPin, int clockPin,
 }
 
 void waterZone::schedule(unsigned int startTime, unsigned int stopTime,
-                       unsigned long daysOfWeek, bool enable) {
+                         unsigned long daysOfWeek, bool enable) {
 
     // When scheduleed, the zone is enabled by default.
     _enabled = enable;
@@ -112,6 +112,17 @@ void waterZone::schedule(unsigned int startTime, unsigned int stopTime,
         daysOfWeek /= 10;
     }
     for(int i = 0; i < 7; i++) Serial.print(_daysOfWeek[i]);
+
+}
+
+void waterZone::schedule(uint16_t startTime,
+                         uint16_t frequency, uint8_t duration, 
+                         uint16_t subFrequency = 0, uint8_t subDuration = 0) {
+    _schedule1Enabled = false;
+    _schedule2Enabled = true;
+    _schedule3Enabled = false;
+    _flowFactor = 1.00;
+    
 
 }
 

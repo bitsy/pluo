@@ -31,7 +31,7 @@ class waterZone {
         static int _latchPin;       // For shift register(s).
         static int _clockPin;       // For shift register(s).
         static int _totalBytes;     // Number of shift registers.
-        static int * _byte;         // Contains byte state of each register.
+        static int* _byte;         // Contains byte state of each register.
 
         // Zone on/off:
         void _on() {
@@ -86,8 +86,10 @@ class waterZone {
         bool _onVerification;
 
         // Schedule 2 Auto Variables:
+        bool _schedule1Enabled;
+        bool _schedule2Enabled;
+        bool _schedule3Enabled;
         float _flowFactor;
-
 
         // Manual Variables:
         bool _manualOverride;
@@ -108,12 +110,19 @@ class waterZone {
         void begin(int serialPin, int latchPin, int clockPin,
                    int totalBytes = 1);
         // Change watering schedule to new parameters.
-        // TODO: Instead of stopTime, use duration?
+        // TODO: Instead of stopTime, use duration? would allow for starting on
+        //       one day and stopping on the next day.
+        // Date Timing!
         void schedule(unsigned int startTime, unsigned int stopTime,
-                    unsigned long daysOfWeek, bool enable = true);
+                      unsigned long daysOfWeek, bool enable = true);
         // TODO: interval timing!!
-        void schedule(uint16_t startTime, uint16_t superDelay, uint8_t superDuration, uint16_t subDelay, uint8_t subDuration);
-        void schedule(uint16_t& patternArray);
+        // functions needed for specifying units?? or user-defined units with 
+        // define type conversions. TODO: how do I deal with saving the 
+        // startDate across resets.
+        void schedule(uint32_t startDate, uint16_t startTime,
+                      uint32_t primaryFrequency, uint32_t primaryDuration, 
+                      uint32_t secondaryFrequency = 0, uint32_t secondaryDuration = 0);
+        void schedule(uint32_t& primaryPattern, uint32_t& secondaryPattern);
         // Return specificied schedule element.
         unsigned long read(int scheduleElement);
         // Check schedule to see if time to water.
@@ -121,7 +130,7 @@ class waterZone {
         // Turn irrigation on.
         void on();
         // Turn irrigation on for a duration (in minutes).
-        // TODO: test this method.
+        // TODO: test this method...useful for figuring out interval timing!
         void on(DateTime now, unsigned int hoursDuration,
                 unsigned int minutesDuration);
         // Turn irrigation off.
@@ -145,13 +154,38 @@ class waterZone {
         //void enableDST();
         //void disableDST();
 
-        // void end();      // destructor to remove zones
+        // TODO: is a destructor necessary?
+        ~waterZone();
 
         // NOTE: how to account for DST??? is it even that important?
-        // NOTE: Alternative scheduling patterns: pick a day, then daily, weekly,
-        // biweekly, monthly, bimonthly, annually, etc.
+        // TODO: Alternative scheduling patterns: pick a day, then daily,
+        //       weekly, biweekly, monthly, bimonthly, annually, etc.
 
 
 };
+
+
+// The following functions convert other time units to seconds for schedule() 
+// arguments:
+
+uint32_t minutes(uint16_t minutes) {
+    uint32_t seconds = minutes * 60;
+    return seconds;
+}
+
+uint32_t hours(uint16_t hours) {
+    uint32_t seconds = hours * 60 * 60;
+    return seconds;
+}
+
+uint32_t days(uint16_t days) {
+    uint32_t seconds = days * 24 * 60 *60;
+    return seconds;
+}
+
+uint32_t weeks(uint16_t weeks) {
+    uint32_t seconds = weeks * 7 * 24 * 60 * 60;
+    return seconds;
+}
 
 #endif
