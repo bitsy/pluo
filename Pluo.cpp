@@ -81,6 +81,9 @@ void waterZone::begin(int serialPin, int latchPin, int clockPin,
 void waterZone::schedule(unsigned int startTime, unsigned int stopTime,
                          unsigned long daysOfWeek, bool enable) {
 
+    bool _schedule1Enabled = true;
+    bool _schedule2Enabled = false;
+
     // When scheduleed, the zone is enabled by default.
     _enabled = enable;
 
@@ -115,14 +118,24 @@ void waterZone::schedule(unsigned int startTime, unsigned int stopTime,
 
 }
 
-void waterZone::schedule(uint16_t startTime,
-                         uint16_t frequency, uint8_t duration, 
-                         uint16_t subFrequency = 0, uint8_t subDuration = 0) {
-    _schedule1Enabled = false;
-    _schedule2Enabled = true;
-    _schedule3Enabled = false;
+void waterZone::schedule(uint32_t startDate, uint16_t startTime,
+                         uint32_t primaryFrequency, uint32_t primaryDuration, 
+                         uint32_t secondaryFrequency, 
+                         uint32_t secondaryDuration) {
+
+    bool _schedule1Enabled = false;
+    bool _schedule2Enabled = true;
     _flowFactor = 1.00;
-    
+    _startDate = startDate;
+    _startTime = startTime;
+    _primaryPattern = new uint32_t [2];
+    _primaryPattern[0] = primaryFrequency;
+    _primaryPattern[1] = primaryDuration;
+    if (secondaryFrequency && secondaryDuration) {
+        _secondaryPattern = new uint32_t [2];
+        _secondaryPattern[0] = secondaryFrequency;
+        _secondaryPattern[1] = secondaryDuration;
+    }
 
 }
 

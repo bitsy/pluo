@@ -88,8 +88,11 @@ class waterZone {
         // Schedule 2 Auto Variables:
         bool _schedule1Enabled;
         bool _schedule2Enabled;
-        bool _schedule3Enabled;
         float _flowFactor;
+        uint32_t _startDate;
+        uint16_t _startTime;
+        uint32_t* _primaryPattern;
+        uint32_t* _secondaryPattern;
 
         // Manual Variables:
         bool _manualOverride;
@@ -121,7 +124,8 @@ class waterZone {
         // startDate across resets.
         void schedule(uint32_t startDate, uint16_t startTime,
                       uint32_t primaryFrequency, uint32_t primaryDuration, 
-                      uint32_t secondaryFrequency = 0, uint32_t secondaryDuration = 0);
+                      uint32_t secondaryFrequency = 0, 
+                      uint32_t secondaryDuration = 0);
         void schedule(uint32_t& primaryPattern, uint32_t& secondaryPattern);
         // Return specificied schedule element.
         unsigned long read(int scheduleElement);
@@ -155,7 +159,7 @@ class waterZone {
         //void disableDST();
 
         // TODO: is a destructor necessary?
-        ~waterZone();
+        //~waterZone();
 
         // NOTE: how to account for DST??? is it even that important?
         // TODO: Alternative scheduling patterns: pick a day, then daily,
