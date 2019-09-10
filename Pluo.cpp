@@ -30,9 +30,8 @@ waterZone::waterZone(unsigned int zonePin, unsigned int startTime,
     _onVerification = false;
 
     _manualOverride = false;
-    _timedManualOverride = false;
-    _tmoStopHour = 0;
-    _tmoStopMinute = 0;
+    _manualStopTime = false;
+    _manualStopTime = 0;
 
 }
 
@@ -185,7 +184,7 @@ bool waterZone::run(uint32_t currentUnixTime) {
 
     DateTime now(currentUnixTime);
     bool returnVal = false;
-    // Automatic Event Trigger:
+    // Automatic Triggers:
     if (_enabled && _manualOverride == false
         && _daysOfWeek[now.dayOfTheWeek()]) {
         // Auto On:
@@ -203,9 +202,8 @@ bool waterZone::run(uint32_t currentUnixTime) {
             returnVal = true;
         }
     }
-    // Automatic Trigger Override Reset:
-    // In case of manual override mode, false auto triggers execute to prevent
-    // unexpected true auto triggers.
+    // _onVerification Reset (for auto triggers that overlap with manual 
+    // triggers):
     else if (_enabled && _manualOverride == true
         && _daysOfWeek[now.dayOfTheWeek()-1]) {
         // If manual off occurs during auto on trigger (1 minute window), this
@@ -221,9 +219,8 @@ bool waterZone::run(uint32_t currentUnixTime) {
         }
     }
 
-    // Automatic Timed Event Trigger:
-    if (_timedManualOverride == true && now.hour() == _tmoStopHour
-        && now.minute() == _tmoStopMinute) {
+    // Timed Manual Off:
+    if (_manualStopTime == true && now.unixtime() >= _manualStopTime) {
         off();
         returnVal = true;
     }
@@ -241,15 +238,15 @@ void waterZone::on() {
 }
 
 // Manually turn on irrigation zone with timer to turn off.
-void waterZone::on(DateTime now, unsigned int hoursDuration,
-                   unsigned int minutesDuration) {
+void waterZone::on(uint32_t currentUnixTime, uint8_t hoursDuration,
+                   uint8_t minutesDuration) {
 
     _on();
+    DateTime now(currentUnixTime);
     _manualOverride = true;
     DateTime future = (now + TimeSpan(0, hoursDuration, minutesDuration, 0));
-    _tmoStopHour = future.hour();
-    _tmoStopMinute = future. minute();
-    _timedManualOverride = true;
+    _manualStopTime = future.unixtime();
+    _manualStopTime = true;
 
 }
 
@@ -258,21 +255,19 @@ void waterZone::off() {
 
     _off();
     _manualOverride = false;
-    _tmoStopHour = 0;
-    _tmoStopMinute = 0;
-    _timedManualOverride = false;
+    _manualStopTime = 0;
+    _manualStopTime = false;
 
 }
 
-// Enable irrigation zone; this will enable automatic watering as scheduled.
+// Enable automatic irrigation according to the schedule.
 void waterZone::enable() {
 
     _enabled = true;
 
 }
 
-// Disable irrigation zone; this will disable automatic watering without
-// modifying the schedule.
+// Disable automatic irrigation without modifiying the schedule.
 void waterZone::disable() {
 
     _enabled = false;

@@ -97,10 +97,7 @@ class waterZone {
         // Manual Variables:
         bool _manualOverride;
         bool _timedManualOverride;
-        unsigned int _tmoHoursDuration;
-        unsigned int _tmoMinutesDuration;
-        unsigned int _tmoStopHour;
-        unsigned int _tmoStopMinute;
+        uint32_t _manualStopTime;
 
     public:
 
@@ -135,8 +132,8 @@ class waterZone {
         void on();
         // Turn irrigation on for a duration (in minutes).
         // TODO: test this method...useful for figuring out interval timing!
-        void on(DateTime now, unsigned int hoursDuration,
-                unsigned int minutesDuration);
+        void on(uint32_t currentUnixTime, uint8_t hoursDuration,
+                uint8_t minutesDuration);
         // Turn irrigation off.
         void off();
         // Return TRUE if irrigation is in progress.
