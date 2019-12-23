@@ -1,8 +1,10 @@
 /*
 
-TO DO:     . = WIP     ✓ = completed
+TODO:     . = WIP     ✓ = completed
 
     [ ] Integrate debug printing (Serial, Blynk terminal)
+    [ ] Fully convert to interval timing
+    [ ] Full refactor after interval conversion
 
 */
 #ifndef Pluo_h
@@ -35,7 +37,6 @@ class waterZone {
 
         // Zone on/off:
         void _on() {
-
             if (_shiftEnabled) {
                 // Calculate which shift register contains the index pin.
                 // e.g. 26/8 = 3 (sri)
@@ -54,10 +55,8 @@ class waterZone {
                 digitalWrite(_latchPin, HIGH);
             }
             else digitalWrite(_index, HIGH);
-
         }
         void _off() {
-
             if (_shiftEnabled) {
                 // Calculate which shift register contains the index pin.
                 int _shiftRegIndex = _index / 8;
@@ -72,10 +71,9 @@ class waterZone {
                 digitalWrite(_latchPin, HIGH);
             }
             else digitalWrite(_index, LOW);
-
         }
 
-        // Schedule 1 Auto Variables:
+        // Auto Variables:
         unsigned int _startHour;
         unsigned int _startMinute;
         unsigned int _stopHour;
@@ -85,14 +83,25 @@ class waterZone {
         bool _enabled;
         bool _onVerification;
 
-        // Schedule 2 Auto Variables:
-        bool _schedule1Enabled;
-        bool _schedule2Enabled;
+        // Interval Auto Variables:
+        uint8_t _currentIterator;
+        uint32_t _masterStartTime;
+        uint32_t _previousTrigger;
+        uint32_t _futureTrigger;
+        bool _intervalEnabled;
         float _flowFactor;
         uint32_t _startDate;
         uint16_t _startTime;
         uint32_t* _primaryPattern;
+        uint8_t _primarySize;
         uint32_t* _secondaryPattern;
+        uint8_t _secondarySize;
+        // TEST: iterator rollover function
+        void _incrementIterator() {
+            _currentIterator++;
+            if (_currentIterator < _primarySize) return;
+            else _currentIterator = 0;
+        }
 
         // Manual Variables:
         bool _manualOverride;
@@ -106,20 +115,14 @@ class waterZone {
                   unsigned int stopTime = 0, unsigned long daysOfWeek = 0);
         // Initialize pin for zone.
         void begin();
-        // Initialize shift register(s) for all zones
+        // Initialize shift register(s) for all zones.
         void begin(int serialPin, int latchPin, int clockPin,
                    int totalBytes = 1);
-        // Change watering schedule to new parameters.
-        // TODO: Instead of stopTime, use duration? would allow for starting on
-        //       one day and stopping on the next day.
-        // Date Timing!
         void schedule(unsigned int startTime, unsigned int stopTime,
                       unsigned long daysOfWeek, bool enable = true);
         // TODO: interval timing!!
-        // functions needed for specifying units?? or user-defined units with 
-        // define type conversions. TODO: how do I deal with saving the 
-        // startDate across resets.
-        void schedule(uint32_t startDate, uint16_t startTime,
+        // TODO: how do I deal with saving the startDate across resets?
+        void schedule(uint32_t masterStartTime,
                       uint32_t primaryFrequency, uint32_t primaryDuration, 
                       uint32_t secondaryFrequency = 0, 
                       uint32_t secondaryDuration = 0);
@@ -128,10 +131,11 @@ class waterZone {
         unsigned long read(int scheduleElement);
         // Check schedule to see if time to water.
         bool run(uint32_t currentUnixTime);
+        // REVIEW: does a second run statement work?
+        // bool run(DateTime currentTime);
         // Turn irrigation on.
         void on();
         // Turn irrigation on for a duration (in minutes).
-        // TODO: test this method...useful for figuring out interval timing!
         void on(uint32_t currentUnixTime, uint8_t hoursDuration,
                 uint8_t minutesDuration);
         // Turn irrigation off.
@@ -150,21 +154,11 @@ class waterZone {
         // Return TRUE if automatic irrigation is disabled.
         bool isDisabled();
         // Change irrigation flow factor.
-        void factor(float flowFactor);
-
-        //void enableDST();
-        //void disableDST();
-
-        // TODO: is a destructor necessary?
+        void factor(float flowFactor); // TODO: Test flow factor...other method?
+        // TODO: create destructor
         //~waterZone();
 
-        // NOTE: how to account for DST??? is it even that important?
-        // TODO: Alternative scheduling patterns: pick a day, then daily,
-        //       weekly, biweekly, monthly, bimonthly, annually, etc.
-
-
 };
-
 
 // The following functions convert other time units to seconds for schedule() 
 // arguments:

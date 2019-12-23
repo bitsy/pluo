@@ -20,15 +20,12 @@ waterZone::waterZone(unsigned int zonePin, unsigned int startTime,
 
     // Set pin or shift register pin as generic index.
     _index = zonePin;
-
     // If all schedule parameters are specified, set the schedule.
         // A valid startTime can be 0; a valid stopTime cannot be 0.
     if (stopTime && daysOfWeek) schedule(startTime, stopTime, daysOfWeek);
     // Otherwise, do not set the schedule, and disable the zone.
     else _enabled = false;
-
     _onVerification = false;
-
     _manualOverride = false;
     _manualStopTime = false;
     _manualStopTime = 0;
@@ -45,29 +42,24 @@ void waterZone::begin() {
 void waterZone::begin(int serialPin, int latchPin, int clockPin,
                       int totalBytes) {
 
+    // Enables shift register if not previously enabled.
     if (! _shiftEnabled) {
-
         // Shift mode enabled.
         _shiftEnabled = true;
-
         // Save array size for future operations.
         _totalBytes = totalBytes;
         // Create shift register array on heap.
         _byte = new int [totalBytes];
-
         // Initiliaze entire array to 0.
         for (int i = 0; i < totalBytes; i++) _byte[i] = 0;
-
         // Save shift register pins.
         _serialPin = serialPin;
         _latchPin = latchPin;
         _clockPin = clockPin;
-
         // Set shift register pins to output mode.
         pinMode(serialPin, OUTPUT);
         pinMode(latchPin, OUTPUT);
         pinMode(clockPin, OUTPUT);
-
         // Set all pins to 0 (off).
         digitalWrite(_latchPin, LOW);
         for (int i = totalBytes - 1; i >= 0; i--)
@@ -80,32 +72,25 @@ void waterZone::begin(int serialPin, int latchPin, int clockPin,
 void waterZone::schedule(unsigned int startTime, unsigned int stopTime,
                          unsigned long daysOfWeek, bool enable) {
 
-    bool _schedule1Enabled = true;
-    bool _schedule2Enabled = false;
-
+    _intervalEnabled = false;
     // When scheduleed, the zone is enabled by default.
     _enabled = enable;
-
     // Parse start and end times into hour and minute values.
     _startHour = startTime / 100;
     _startMinute = startTime % 100;
     _stopHour = stopTime / 100;
     _stopMinute = stopTime % 100;
-
     // Save the scheduled days as an unsigned long.
     _daysofWeekLong = daysOfWeek;
-
     // Count number of digits in daysOfWeek parameter.
     int dayCount = 1;
     unsigned long countDaysOfWeek = daysOfWeek;
     while (countDaysOfWeek /= 10) dayCount++;
-
     // Fill _daysOfWeek[] with 0's to remove previous records.
-    for(int i = 0; i < 7; i++) _daysOfWeek[i] = 0;
-    
+    for (int i = 0; i < 7; i++) _daysOfWeek[i] = 0;
     // Read each digit of daysOfWeek and load into _daysOfWeek[] irrigation
     // schedule.
-    for(int i = 0; i < dayCount; i++) {
+    for (int i = 0; i < dayCount; i++) {
         // Retrieve one digit (scheduled day) from daysOfWeek.
         int digit = daysOfWeek % 10;
         // Go to index of scheduled day in _daysofweek[], set value as 1.
@@ -113,20 +98,20 @@ void waterZone::schedule(unsigned int startTime, unsigned int stopTime,
         // Remove scheduled day from daysOfWeek.
         daysOfWeek /= 10;
     }
-    for(int i = 0; i < 7; i++) Serial.print(_daysOfWeek[i]);
+    for (int i = 0; i < 7; i++) Serial.print(_daysOfWeek[i]);
 
 }
 
-void waterZone::schedule(uint32_t startDate, uint16_t startTime,
+void waterZone::schedule(uint32_t masterStartTime,
                          uint32_t primaryFrequency, uint32_t primaryDuration, 
                          uint32_t secondaryFrequency, 
                          uint32_t secondaryDuration) {
 
-    bool _schedule1Enabled = false;
-    bool _schedule2Enabled = true;
+    _intervalEnabled = true;
     _flowFactor = 1.00;
-    _startDate = startDate;
-    _startTime = startTime;
+    _masterStartTime = masterStartTime;
+    // NOTE: Future, more complex interval patterns (biweekly, monthly, etc.)
+    // can use larger arrays (requires overload).
     _primaryPattern = new uint32_t [2];
     _primaryPattern[0] = primaryFrequency;
     _primaryPattern[1] = primaryDuration;
@@ -135,6 +120,9 @@ void waterZone::schedule(uint32_t startDate, uint16_t startTime,
         _secondaryPattern[0] = secondaryFrequency;
         _secondaryPattern[1] = secondaryDuration;
     }
+    _previousTrigger = 0;
+    _futureTrigger = 0;
+    _currentIterator = 0;
 
 }
 
@@ -183,49 +171,87 @@ unsigned long waterZone::read(int scheduleElement) {
 bool waterZone::run(uint32_t currentUnixTime) {
 
     DateTime now(currentUnixTime);
-    bool returnVal = false;
-    // Automatic Triggers:
-    if (_enabled && _manualOverride == false
-        && _daysOfWeek[now.dayOfTheWeek()]) {
-        // Auto On:
-        if (_onVerification == false && now.hour() == _startHour
-            && now.minute() == _startMinute) {
-            _on();
-            _onVerification = true;
-            returnVal = true;
+    bool autoEvent = false;
+    if (!_intervalEnabled) {
+        // Automatic events:
+        if (_enabled && _manualOverride == false
+            && _daysOfWeek[now.dayOfTheWeek()]) {
+            // Auto On:
+            if (_onVerification == false && now.hour() == _startHour
+                && now.minute() == _startMinute) {
+                _on();
+                _onVerification = true;
+                autoEvent = true;
+            }
+            // Auto Off:
+            else if (_onVerification == true && now.hour() == _stopHour
+                && now.minute() == _stopMinute) {
+                _off();
+                _onVerification = false;
+                autoEvent = true;
+            }
         }
-        // Auto Off:
-        else if (_onVerification == true && now.hour() == _stopHour
-            && now.minute() == _stopMinute) {
-            _off();
-            _onVerification = false;
-            returnVal = true;
+        // _onVerification Reset (for auto events that overlap with manual 
+        // events):
+        else if (_enabled && _manualOverride == true
+            && _daysOfWeek[now.dayOfTheWeek()-1]) {
+            // If manual off occurs during auto on event (1 minute window),
+            // this prevents the zone from immediately turning back on.
+            if (_onVerification == false && now.hour() == _startHour
+                && now.minute() == _startMinute) {
+                _onVerification = true;
+            }
+            // 
+            else if (_onVerification == true && now.hour() == _stopHour
+                && now.minute() == _stopMinute) {
+                _onVerification = false;
+            }
         }
     }
-    // _onVerification Reset (for auto triggers that overlap with manual 
-    // triggers):
-    else if (_enabled && _manualOverride == true
-        && _daysOfWeek[now.dayOfTheWeek()-1]) {
-        // If manual off occurs during auto on trigger (1 minute window), this
-        // prevents the zone from immediately turning back on.
-        if (_onVerification == false && now.hour() == _startHour
-            && now.minute() == _startMinute) {
-            _onVerification = true;
+    // TEST: Interval scheduling
+    else if (_intervalEnabled) {
+        // Check start date.
+        // Calculate next auto event time using start date and current time.
+        // Generate a trigger (see timed manual function).
+        //     If start date is today before start time, then generate ON
+        //     trigger.
+        if (_futureTrigger == 0 && now.unixtime() - _masterStartTime >= 0) {
+            // FIXME: include calculations for when multiple frequency values exist.
+            uint32_t intervalDifference = (now.unixtime() - _masterStartTime) / _primaryPattern[0]; // e.g. (4005 - 2000)/1000 = 2
+            _previousTrigger = _masterStartTime + intervalDifference * _primaryPattern[0]; // e.g. 2000 + 2 * 1000 = 4000
+            _futureTrigger = _previousTrigger + _primaryPattern[0]; // e.g. 4000 + 1000 = 5000
         }
-        // 
-        else if (_onVerification == true && now.hour() == _stopHour
-            && now.minute() == _stopMinute) {
-            _onVerification = false;
+        if (now.unixtime() >= _futureTrigger) {
+            if (_currentIterator % 2 == 0) {
+                _on();
+                // Save previous trigger.
+                _previousTrigger = _futureTrigger;
+                _incrementIterator();
+                // Set new future trigger ("on" duration).
+                _futureTrigger += _primaryPattern[_currentIterator];
+                // Set return value.
+                autoEvent = true;
+            }
+            else {
+                _off();
+                // Save previous trigger as previous START time.
+                _previousTrigger = _futureTrigger - _primaryPattern[_currentIterator];
+                // Set future trigger equal to previous START time.
+                _futureTrigger = _previousTrigger;
+                _incrementIterator();
+                // Set new future trigger (time until next "on").
+                _futureTrigger += _primaryPattern[_currentIterator];
+                // Set return value.
+                autoEvent = true;
+            }
         }
     }
-
-    // Timed Manual Off:
+    // Auto Off Timer for Manual On:
     if (_manualStopTime == true && now.unixtime() >= _manualStopTime) {
         off();
-        returnVal = true;
+        autoEvent = true;
     }
-
-    return returnVal;
+    return autoEvent;
 
 }
 
@@ -238,6 +264,7 @@ void waterZone::on() {
 }
 
 // Manually turn on irrigation zone with timer to turn off.
+// TEST: updated timed manual on/off method.
 void waterZone::on(uint32_t currentUnixTime, uint8_t hoursDuration,
                    uint8_t minutesDuration) {
 
