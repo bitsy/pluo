@@ -154,33 +154,10 @@ class waterZone {
         // Return TRUE if automatic irrigation is disabled.
         bool isDisabled();
         // Change irrigation flow factor.
-        void factor(float flowFactor); // TODO: Test flow factor...other method?
+        void factor(float flowFactor); // TEST: flow factor...other method?
         // TODO: create destructor
         //~waterZone();
 
 };
-
-// The following functions convert other time units to seconds for schedule() 
-// arguments:
-
-uint32_t minutes(uint16_t minutes) {
-    uint32_t seconds = minutes * 60;
-    return seconds;
-}
-
-uint32_t hours(uint16_t hours) {
-    uint32_t seconds = hours * 60 * 60;
-    return seconds;
-}
-
-uint32_t days(uint16_t days) {
-    uint32_t seconds = days * 24 * 60 *60;
-    return seconds;
-}
-
-uint32_t weeks(uint16_t weeks) {
-    uint32_t seconds = weeks * 7 * 24 * 60 * 60;
-    return seconds;
-}
 
 #endif

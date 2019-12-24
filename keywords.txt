@@ -4,14 +4,15 @@
 
 waterZone	KEYWORD1
 begin	KEYWORD2
-adjust	KEYWORD2
+schedule	KEYWORD2
 read	KEYWORD2
-run KEYWORD2
+run	KEYWORD2
 on	KEYWORD2
 off	KEYWORD2
 isOn	KEYWORD2
-isOff   KEYWORD2
+isOff	KEYWORD2
 enable	KEYWORD2
 disable	KEYWORD2
-isEnabled   KEYWORD2
-isDisabled  KEYWORD2
+isEnabled	KEYWORD2
+isDisabled	KEYWORD2
+factor	KEYWORD2
